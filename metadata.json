@@ -1,0 +1,7 @@
+{
+  "name": "MindGuard",
+  "description": "An intelligent mental-wellbeing, stress analysis, and content recommendation engine designed to act as your supportive digital companion.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
