@@ -7,12 +7,12 @@ interface AssessmentFormProps {
   onComplete: (data: any) => void;
 }
 
-// Define a common interface for questions to avoid TypeScript union errors when accessing properties like 'type'
 interface Question {
   key: string;
   label: string;
   placeholder?: string;
-  type?: string;
+  type?: 'range' | 'choice' | 'text';
+  options?: string[];
 }
 
 const AssessmentForm: React.FC<AssessmentFormProps> = ({ category, onComplete }) => {
@@ -35,22 +35,71 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({ category, onComplete })
     }
   });
 
-  // Explicitly typing the question arrays as Question[] ensures that all objects share the same interface
   const onboardingQuestions: Question[] = [
-    { key: 'lifePressure', label: 'How would you describe your current life pressure?', placeholder: 'e.g., Heavy work deadlines, exams approaching, family issues...' },
-    { key: 'sleepQuality', label: 'Generally, how has your sleep quality been lately?', placeholder: 'e.g., Restless, deep but short, 8 hours consistently...' },
-    { key: 'mood', label: 'What is your primary mood most days?', placeholder: 'e.g., Anxious, content, irritable, optimistic...' },
-    { key: 'motivation', label: 'How motivated do you feel right now?', placeholder: 'e.g., Hard to get out of bed, high energy, focused on goals...' },
-    { key: 'biggestWorry', label: 'What is your biggest worry at the moment?', placeholder: 'Be as honest as you feel comfortable...' },
-    { key: 'energyLevel', label: 'Describe your physical energy levels throughout the day.', placeholder: 'e.g., Sluggish in the morning, peak at night, steady...' },
-    { key: 'workLifeBalance', label: 'How is your work-life (or study-life) balance?', placeholder: 'e.g., Non-existent, decent, working on it...' },
+    { 
+      key: 'lifePressure', 
+      label: 'How would you describe your current life pressure?', 
+      type: 'choice',
+      options: ['Low / Minimal', 'Moderate / Manageable', 'High / Challenging', 'Overwhelming / Intense']
+    },
+    { 
+      key: 'sleepQuality', 
+      label: 'Generally, how has your sleep quality been lately?', 
+      type: 'choice',
+      options: ['Excellent (Deep & Restful)', 'Good (Steady)', 'Fair (Interrupted)', 'Poor (Restless)']
+    },
+    { 
+      key: 'mood', 
+      label: 'What is your primary mood most days?', 
+      type: 'choice',
+      options: ['Optimistic / Happy', 'Calm / Content', 'Anxious / Nervous', 'Irritable / Stressed', 'Low / Sad']
+    },
+    { 
+      key: 'motivation', 
+      label: 'How motivated do you feel right now?', 
+      type: 'choice',
+      options: ['Highly Driven', 'Steady & Focused', 'Struggling to Start', 'No Motivation']
+    },
+    { 
+      key: 'biggestWorry', 
+      label: 'What is your biggest worry at the moment?', 
+      type: 'choice',
+      options: ['Work / Career', 'Studies / Exams', 'Finances / Money', 'Relationships / Family', 'Health / Wellness', 'Personal Growth']
+    },
+    { 
+      key: 'energyLevel', 
+      label: 'Describe your physical energy levels throughout the day.', 
+      type: 'choice',
+      options: ['High Energy', 'Steady & Reliable', 'Mostly Sluggish', 'Unpredictable / Peaks & Valleys']
+    },
+    { 
+      key: 'workLifeBalance', 
+      label: 'How is your work-life (or study-life) balance?', 
+      type: 'choice',
+      options: ['Healthy & Balanced', 'Mostly Balanced', 'Needs Improvement', 'Completely Imbalanced']
+    },
   ];
 
   const dailyQuestions: Question[] = [
     { key: 'selfReportedStress', label: 'How stressed do you feel right now? (1-10)', type: 'range' },
-    { key: 'moodTrigger', label: 'What affected your mood the most today?', placeholder: 'e.g., A conversation, traffic, a task finished...' },
-    { key: 'sleepLastNight', label: 'How was your sleep last night?', placeholder: 'e.g., Better than usual, interrupted, poor...' },
-    { key: 'dayWord', label: 'One word to describe your today?', placeholder: 'e.g., Productive, exhausting, peaceful...' },
+    { 
+      key: 'moodTrigger', 
+      label: 'What affected your mood the most today?', 
+      type: 'choice',
+      options: ['Social Interactions', 'Work / Tasks', 'Health / Fitness', 'Environment / News', 'Personal Thoughts', 'Sleep Quality']
+    },
+    { 
+      key: 'sleepLastNight', 
+      label: 'How was your sleep last night?', 
+      type: 'choice',
+      options: ['Great (8+ hours)', 'Good (6-7 hours)', 'Interrupted / Light', 'Very Poor / No Sleep']
+    },
+    { 
+      key: 'dayWord', 
+      label: 'One word to describe your today?', 
+      type: 'choice',
+      options: ['Productive', 'Peaceful', 'Tiring', 'Stressful', 'Joyful', 'Boring', 'Emotional']
+    },
   ];
 
   const totalSteps = onboardingQuestions.length + dailyQuestions.length;
@@ -93,7 +142,7 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({ category, onComplete })
   const progress = ((currentStep + 1) / totalSteps) * 100;
 
   return (
-    <div className="max-w-2xl mx-auto py-12">
+    <div className="max-w-3xl mx-auto py-12">
       <div className="mb-8">
         <div className="flex justify-between items-center mb-4">
           <span className="text-sm font-semibold text-indigo-600 uppercase tracking-wider">
@@ -110,13 +159,12 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({ category, onComplete })
       </div>
 
       <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
-        <h3 className="text-2xl font-bold text-slate-900 mb-6">
+        <h3 className="text-2xl font-bold text-slate-900 mb-8 text-center md:text-left">
           {currentQuestion.label}
         </h3>
 
-        {/* Accessing type property on Question interface safely */}
         {currentQuestion.type === 'range' ? (
-          <div className="space-y-4">
+          <div className="space-y-6 py-4">
             <input 
               type="range" 
               min="1" 
@@ -125,11 +173,33 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({ category, onComplete })
               onChange={(e) => updateForm(parseInt(e.target.value))}
               className="w-full h-3 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
             />
-            <div className="flex justify-between text-lg font-bold text-indigo-600">
-              <span>Calm</span>
-              <span>{value}</span>
-              <span>Extreme</span>
+            <div className="flex justify-between text-lg font-bold text-indigo-600 px-2">
+              <span className="flex flex-col items-center">
+                <span className="text-2xl">🧘</span>
+                <span className="text-xs font-medium text-slate-400 mt-1">CALM</span>
+              </span>
+              <span className="text-4xl">{value}</span>
+              <span className="flex flex-col items-center">
+                <span className="text-2xl">🌋</span>
+                <span className="text-xs font-medium text-slate-400 mt-1">EXTREME</span>
+              </span>
             </div>
+          </div>
+        ) : currentQuestion.type === 'choice' ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {currentQuestion.options?.map((option) => (
+              <button
+                key={option}
+                onClick={() => updateForm(option)}
+                className={`p-4 text-left rounded-2xl border-2 transition-all duration-200 font-medium ${
+                  value === option 
+                  ? 'border-indigo-600 bg-indigo-50 text-indigo-700 shadow-md' 
+                  : 'border-slate-100 bg-slate-50 text-slate-600 hover:border-indigo-200 hover:bg-slate-100'
+                }`}
+              >
+                {option}
+              </button>
+            ))}
           </div>
         ) : (
           <textarea
@@ -141,26 +211,31 @@ const AssessmentForm: React.FC<AssessmentFormProps> = ({ category, onComplete })
           />
         )}
 
-        <div className="mt-8 flex justify-between">
+        <div className="mt-10 flex justify-between items-center">
           <button 
             onClick={handleBack}
             disabled={currentStep === 0}
-            className={`px-6 py-3 font-semibold rounded-xl transition-all ${currentStep === 0 ? 'text-slate-300 pointer-events-none' : 'text-slate-600 hover:bg-slate-100'}`}
+            className={`flex items-center space-x-2 px-6 py-3 font-semibold rounded-xl transition-all ${currentStep === 0 ? 'text-slate-300 pointer-events-none' : 'text-slate-600 hover:bg-slate-100'}`}
           >
-            Back
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"/></svg>
+            <span>Back</span>
           </button>
+          
           <button 
             onClick={handleNext}
             disabled={!value && currentQuestion.type !== 'range'}
-            className="px-10 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold rounded-xl transition-all shadow-lg shadow-indigo-200"
+            className="flex items-center space-x-2 px-10 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold rounded-xl transition-all shadow-lg shadow-indigo-200 group"
           >
-            {currentStep === totalSteps - 1 ? 'Analyze My State' : 'Next'}
+            <span>{currentStep === totalSteps - 1 ? 'Analyze My State' : 'Next'}</span>
+            {currentStep !== totalSteps - 1 && (
+              <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"/></svg>
+            )}
           </button>
         </div>
       </div>
       
-      <p className="mt-6 text-center text-slate-400 text-sm">
-        Your answers help us create a personalized wellbeing plan.
+      <p className="mt-6 text-center text-slate-400 text-xs italic">
+        "Self-awareness is the first step toward healing."
       </p>
     </div>
   );
