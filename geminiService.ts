@@ -2,40 +2,27 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { AssessmentData, MindGuardResponse } from "./types";
 
-// Initializing the GoogleGenAI client with the API key from environment variables as required
+// Initializing the GoogleGenAI client with the API key from environment variables
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export const getMindGuardAnalysis = async (data: AssessmentData): Promise<MindGuardResponse> => {
   const prompt = `
-    You are MindGuard, a mental wellbeing engine. Analyze the following user profile and provide a structured JSON response as specified.
+    You are MindGuard, a mental wellbeing engine. Analyze the user profile and provide a structured JSON response.
     
     USER PROFILE:
     Category: ${data.category}
-    
-    ONBOARDING DATA:
-    - Life Pressure: ${data.onboarding.lifePressure}
-    - Sleep Quality: ${data.onboarding.sleepQuality}
-    - Mood: ${data.onboarding.mood}
-    - Motivation: ${data.onboarding.motivation}
-    - Biggest Worry: ${data.onboarding.biggestWorry}
-    - Energy Level: ${data.onboarding.energyLevel}
-    - Work/Life Balance: ${data.onboarding.workLifeBalance}
-    
-    DAILY CHECK-IN:
-    - Self Reported Stress (1-10): ${data.dailyCheckin.selfReportedStress}
-    - Mood Trigger: ${data.dailyCheckin.moodTrigger}
-    - Sleep Last Night: ${data.dailyCheckin.sleepLastNight}
-    - One word for today: ${data.dailyCheckin.dayWord}
+    Current Life Pressure: ${data.onboarding.lifePressure}
+    Mood: ${data.onboarding.mood}
+    Daily Stress Level (1-10): ${data.dailyCheckin.selfReportedStress}
+    Today's Trigger: ${data.dailyCheckin.moodTrigger}
 
     RULES:
     1. MindGuard is a supportive companion, NOT a medical professional.
-    2. Respond strictly in JSON format.
-    3. Generate realistic stress history (mock data for the graph for the last 7 days).
-    4. Scoring: Map 1-10 stress to 0-100, then adjust based on mood/sleep/pressure.
-    5. Personalize coping suggestions and content based on stress level.
+    2. Respond strictly in JSON.
+    3. IMPORTANT: For "recommendations.videos", provide 3 VALID YouTube URLs (e.g., https://www.youtube.com/watch?v=...) that are relevant to the user's stress level (e.g., guided meditation for High stress, upbeat science/productivity for Low stress).
+    4. Generate realistic 7-day stress history data.
   `;
 
-  // Use the recommended generateContent call structure with string prompt and config
   const response = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',
     contents: prompt,
@@ -108,7 +95,7 @@ export const getMindGuardAnalysis = async (data: AssessmentData): Promise<MindGu
           recommendations: {
             type: Type.OBJECT,
             properties: {
-              videos: { type: Type.ARRAY, items: { type: Type.STRING } },
+              videos: { type: Type.ARRAY, items: { type: Type.STRING }, description: "YouTube URLs" },
               shorts_reels: { type: Type.ARRAY, items: { type: Type.STRING } },
               shayari: { type: Type.ARRAY, items: { type: Type.STRING } },
               quotes: { type: Type.ARRAY, items: { type: Type.STRING } },
@@ -125,6 +112,5 @@ export const getMindGuardAnalysis = async (data: AssessmentData): Promise<MindGu
     }
   });
 
-  // accessing response.text as a property as required by guidelines
   return JSON.parse(response.text || '{}');
 };

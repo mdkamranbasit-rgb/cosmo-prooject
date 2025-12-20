@@ -1,8 +1,8 @@
 
-import React, { useMemo } from 'react';
+import React, { useState } from 'react';
 import { MindGuardResponse } from '../types';
 import { 
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area 
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area 
 } from 'recharts';
 
 interface DashboardProps {
@@ -11,6 +11,7 @@ interface DashboardProps {
 
 const Dashboard: React.FC<DashboardProps> = ({ report }) => {
   const { stress_analysis, stress_graph, coping_suggestions, calming_message, user_profile, recommendations } = report;
+  const [activeVideo, setActiveVideo] = useState<string | null>(null);
 
   const getLevelColor = (level: string) => {
     switch (level) {
@@ -23,12 +24,38 @@ const Dashboard: React.FC<DashboardProps> = ({ report }) => {
 
   const trendColor = stress_analysis.trend === 'Increasing' ? 'text-rose-500' : stress_analysis.trend === 'Decreasing' ? 'text-emerald-500' : 'text-slate-400';
 
+  // Helper to extract YouTube ID for embed and thumbnail
+  const getYouTubeId = (url: string) => {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
+  };
+
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-12 animate-in fade-in duration-1000">
+      {/* Video Modal Overlay */}
+      {activeVideo && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="relative w-full max-w-4xl aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl">
+            <button 
+              onClick={() => setActiveVideo(null)}
+              className="absolute top-4 right-4 z-10 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+            <iframe 
+              src={`https://www.youtube.com/embed/${getYouTubeId(activeVideo)}?autoplay=1`}
+              className="w-full h-full"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+        </div>
+      )}
+
       {/* Top Section: Overview */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-8">
-          {/* Calming Message Card */}
           <div className="bg-gradient-to-br from-indigo-600 to-purple-700 p-8 rounded-3xl text-white shadow-xl">
             <h2 className="text-2xl font-bold mb-3">Hi there, friend.</h2>
             <p className="text-lg opacity-90 leading-relaxed italic">
@@ -36,7 +63,6 @@ const Dashboard: React.FC<DashboardProps> = ({ report }) => {
             </p>
           </div>
 
-          {/* Graph Section */}
           <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
             <div className="flex justify-between items-center mb-8">
               <div>
@@ -70,9 +96,7 @@ const Dashboard: React.FC<DashboardProps> = ({ report }) => {
           </div>
         </div>
 
-        {/* Sidebar: Score & Profile */}
         <div className="space-y-8">
-          {/* Current Score Card */}
           <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm text-center">
             <div className="inline-flex items-center justify-center p-6 rounded-full border-8 border-slate-50 mb-4 bg-white shadow-inner">
               <span className={`text-5xl font-extrabold ${stress_analysis.stress_level === 'High' ? 'text-rose-500' : 'text-indigo-600'}`}>
@@ -94,7 +118,6 @@ const Dashboard: React.FC<DashboardProps> = ({ report }) => {
             </div>
           </div>
 
-          {/* User Profile Analysis */}
           <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
             <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider">Analysis Profile</h4>
             <div>
@@ -119,7 +142,6 @@ const Dashboard: React.FC<DashboardProps> = ({ report }) => {
         </div>
       </div>
 
-      {/* Coping Suggestions */}
       <div className="space-y-6">
         <h3 className="text-2xl font-bold text-slate-900">Your Coping Strategies</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -141,12 +163,10 @@ const Dashboard: React.FC<DashboardProps> = ({ report }) => {
         </div>
       </div>
 
-      {/* Recommended Content */}
       <div className="space-y-8">
         <h3 className="text-2xl font-bold text-slate-900">Stress-Aware Content</h3>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {/* Shayari & Quotes */}
           <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-6">
             <h4 className="font-bold text-slate-900 flex items-center">
               <span className="w-2 h-2 bg-pink-500 rounded-full mr-2"></span>
@@ -166,30 +186,41 @@ const Dashboard: React.FC<DashboardProps> = ({ report }) => {
             </div>
           </div>
 
-          {/* Videos */}
           <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-6">
             <h4 className="font-bold text-slate-900 flex items-center">
               <span className="w-2 h-2 bg-indigo-500 rounded-full mr-2"></span>
               Curated Videos
             </h4>
             <div className="space-y-4">
-              {recommendations.videos.map((v, i) => (
-                <div key={i} className="group cursor-pointer">
-                  <div className="bg-slate-100 aspect-video rounded-xl mb-2 overflow-hidden flex items-center justify-center relative">
-                    <img src={`https://picsum.photos/400/225?random=${i}`} className="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform" />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-10 h-10 bg-white/90 rounded-full flex items-center justify-center shadow-lg">
-                        <svg className="w-5 h-5 text-indigo-600" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+              {recommendations.videos.map((url, i) => {
+                const videoId = getYouTubeId(url);
+                return (
+                  <div key={i} className="group cursor-pointer" onClick={() => setActiveVideo(url)}>
+                    <div className="bg-slate-100 aspect-video rounded-xl mb-2 overflow-hidden flex items-center justify-center relative">
+                      {videoId ? (
+                        <img 
+                          src={`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`} 
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform" 
+                          alt="Video thumbnail"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-slate-200 flex items-center justify-center">
+                          <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center">
+                        <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform">
+                          <svg className="w-6 h-6 text-indigo-600 fill-current ml-1" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                        </div>
                       </div>
                     </div>
+                    <p className="text-xs font-bold text-indigo-600 uppercase tracking-widest">Personalized Recommendation {i + 1}</p>
                   </div>
-                  <p className="text-sm font-semibold text-slate-800 line-clamp-1">{v}</p>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
-          {/* Humor */}
           <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-6">
             <h4 className="font-bold text-slate-900 flex items-center">
               <span className="w-2 h-2 bg-amber-500 rounded-full mr-2"></span>
@@ -217,7 +248,6 @@ const Dashboard: React.FC<DashboardProps> = ({ report }) => {
         </div>
       </div>
 
-      {/* Professional Help Note (Safety First) */}
       {stress_analysis.stress_level === 'High' && (
         <div className="bg-rose-50 border border-rose-100 p-6 rounded-3xl flex items-center space-x-4">
           <div className="w-12 h-12 bg-rose-500 rounded-full flex items-center justify-center text-white flex-shrink-0">
